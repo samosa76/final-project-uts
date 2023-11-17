@@ -140,7 +140,7 @@ class NewsController extends Controller
                 'data' => $news,
                 'message' => 'news updated successfully',
                 'success' => true
-            ]
+            ],200
         );
     }
 
