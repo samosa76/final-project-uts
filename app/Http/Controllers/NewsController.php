@@ -153,7 +153,7 @@ class NewsController extends Controller
         $news = News::find($id);
 
         if (!$news) {
-            return response()->json(['error' => 'Data not found'],400);
+            return response()->json(['error' => 'Data not found'],404);
         }
 
         $news->delete();
