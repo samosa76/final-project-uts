@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\News;
+use Illuminate\Support\Facades\Validator;
 
 class NewsController extends Controller
 {
@@ -23,6 +24,10 @@ class NewsController extends Controller
     {
         $news = News::all();
 
+        if ($news->isEmpty()) {
+            return response()->json(['message' => 'No data available'], 200);
+        }
+
         $data = 
         [
             'message' => 'showing all news',
@@ -37,6 +42,36 @@ class NewsController extends Controller
      */
     public function store(Request $request)
     {
+
+        $validator = Validator::make($request->all(),
+        [
+            'title' => 'required',
+            'author' => 'required',
+            'description' => 'required',
+            'content' => 'required|min:3|max:1000',
+            'url' => 'required',
+            'url_image' => 'required',
+            'category' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(
+                ['error' => $validator->errors()],400);
+        }
+
+        /* 
+        $validated = $request->validated(
+            [
+                'title' => 'required',
+                'author' => 'required',
+                'description' => 'required',
+                'content' => 'required|min:3|max:1000',
+                'url' => 'required',
+                'url_image' => 'required',
+                'category' => 'required',
+            ]
+        );
+
         $input = 
         [
             'title' => $request->title,
@@ -47,16 +82,12 @@ class NewsController extends Controller
             'url_image' => $request->url_image,
             'category' => $request->category,
         ];
+        */
 
-        $news = News::create($input);
+        $data = $request->all();
+        $news = News::create($data);
 
-        $data = 
-        [
-            'message' => 'News is created',
-            'data' => $news
-        ];
-
-        return response()->json($data, 201);
+        return response()->json($news, 201);
     }
 
     /**
@@ -64,7 +95,11 @@ class NewsController extends Controller
      */
     public function show(string $id)
     {
-        $news = News::where('id',$id)->get();
+        $news = News::find($id);
+
+        if (!$news) {
+            return response()->json(['error' => 'Data not found'],404);
+        }
 
         $data = 
         [
@@ -78,19 +113,28 @@ class NewsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, News $news)
+    public function update(Request $request, $id)
     {
-        $news->update(
-            [
-                'title' => $request->get('title'),
-                'author' => $request->get('author'),
-                'description' => $request->get('description'),
-                'content' => $request->get('content'),
-                'url' => $request->get('url'),
-                'url_image' => $request->get('url_image'),
-                'category' => $request->get('category')
-            ]
-            );
+
+        $news = News::find($id);
+
+        if (!$news) {
+            return response()->json(['error' => 'Data not found'],404);
+        }
+
+        $news->update($request->only(['title','author','description','content','url','url_image','category']));
+
+        // $news->update(
+        //     [
+        //         'title' => $request->get('title'),
+        //         'author' => $request->get('author'),
+        //         'description' => $request->get('description'),
+        //         'content' => $request->get('content'),
+        //         'url' => $request->get('url'),
+        //         'url_image' => $request->get('url_image'),
+        //         'category' => $request->get('category')
+        //     ]);
+
         return response()->json(
             [
                 'data' => $news,
@@ -103,20 +147,19 @@ class NewsController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(News $news)
+    public function destroy($id)
     {
 
+        $news = News::find($id);
+
+        if (!$news) {
+            return response()->json(['error' => 'Data not found'],400);
+        }
+
         $news->delete();
-
-        $data = 
-        [
-            'message' => 'student has been remove',
-            'data' => [],
-            'success' => true
-        ];
-
+        
         //mengembalikan response sebagai json
-        return response()->json($data, 204);
+        return response()->json(['message' => 'Data has been deleted'], 200);
     }
     public function search($title)
     {
